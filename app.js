@@ -4,7 +4,6 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const user = require('./demo-wallet-with-flutterwave/model/user');
-const user = require('./demo-wallet-with-flutterwave/model/user');
 
 const app = express();
 

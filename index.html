@@ -13,8 +13,9 @@
 
     <script>
         function makePayment() {
+          console.log(process.env)
             FlutterwaveCheckout({
-                public_key: "YOUR_PUBLIC_KEY_HERE",
+                public_key: "FLWPUBK_TEST-26c61af658ce780ce97c5ea2c2874b25-X",
                 tx_ref: "hooli-tx-1920bbtyt",
                 amount: 1000,
                 currency: "NGN",
