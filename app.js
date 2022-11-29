@@ -3,8 +3,9 @@ const connectDB = require('./demo-wallet-with-flutterwave/config/database');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const user = require('./demo-wallet-with-flutterwave/model/user');
-
+const User = require('./demo-wallet-with-flutterwave/model/user');
+const path = require('path');
+const axios = require('axios');
 const app = express();
 
 app.use(express.json()); //builtin middleware
@@ -23,7 +24,7 @@ app.post('/register', async (req,res) => {
         }
 
         //Check if user exist and if user exist in our database
-        const oldUser = await user.findOne({email});
+        const oldUser = await User.findOne({email});
 
         if(oldUser){
             return res.status(409).send("User Already Exist. Please Login");
@@ -35,7 +36,7 @@ app.post('/register', async (req,res) => {
 
         //Create and save user in our database
 
-        const user = await user.create({
+        const user = await User.create({
             first_name,
             last_name,
             email: email.toLowerCase(),
@@ -72,7 +73,7 @@ app.post('/login', async (req,res) => {
         }
 
         //validate if user exist in database
-        const user = await user.findOne({email})
+        const user = await User.findOne({email})
 
         if(user && (await bcrypt.compare(password, user.password))) {
             //create user token
@@ -95,11 +96,30 @@ app.post('/login', async (req,res) => {
         res.status(400).send("Invalid Credentials");
     } catch(err){
         console.log(err);
-    }
-
-    app.get('/pay', (req,res) => {
-        res.sendFile(path.join(__dirname + "/index.html"))
-    })
+    };
+})
+app.get('/pay', (req, res) => {
+    res.sendFile(path.join(__dirname + "/index.html"))
 })
 
+app.get('/response', async (req,res) => {
+    const {transaction_id }= req.query;
+
+    //URL with txn id to confirm txn status
+    const url =  `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`;
+    
+    console.log(`ff ${url}`)
+    //Network call to confirm txn status
+
+    const response = await axios({
+        url,
+        method: "get",
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `${process.env.FLUTTERWAVE_V3_SECRET_KEY}`,
+        },
+    });
+     console.log(response.data.data)
+});
 module.exports = app;

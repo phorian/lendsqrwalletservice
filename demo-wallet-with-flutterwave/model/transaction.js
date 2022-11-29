@@ -4,7 +4,7 @@ const { schema } = require('./user')
 const transactionSchema = new mongoose.Schema(
     {
         userId: {
-            type: Schema.Types.ObjectId,
+            type: schema.Types.ObjectId,
             ref:"user",
         },
         transactionId: {
@@ -44,6 +44,9 @@ const transactionSchema = new mongoose.Schema(
             enum: ["flutterwave"],
         },
     },
+    {
+        timestamps: true,
+    }
 );
 
 module.exports = mongoose.model("Transaction", transactionSchema);
