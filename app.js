@@ -7,7 +7,7 @@ const User = require('./demo-wallet-with-flutterwave/model/user');
 const path = require('path');
 const axios = require('axios');
 const app = express();
-
+const http = require('http')
 app.use(express.json()); //builtin middleware
 
 /*******************
@@ -102,24 +102,31 @@ app.get('/pay', (req, res) => {
     res.sendFile(path.join(__dirname + "/index.html"))
 })
 
-app.get('/response', async (req,res) => {
-    const {transaction_id }= req.query;
-
+app.get('/response', async (req, res, next) => {
+    const { transaction_id } = req.query;
     //URL with txn id to confirm txn status
-    const url =  `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`;
-    
-    console.log(`ff ${url}`)
+    const url = `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`;
     //Network call to confirm txn status
-
-    const response = await axios({
-        url,
-        method: "get",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `${process.env.FLUTTERWAVE_V3_SECRET_KEY}`,
-        },
-    });
-     console.log(response.data.data)
+    try {
+        const response = await axios({
+            url,
+            method: "get",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`,
+            },
+        });
+        const response_data = response.data.data
+        
+            if(!response_data){
+                res.status(404).json({ status: "fail" })
+                return next()
+            }
+            res.status(200).json({ status: "success", data: response_data })
+            return next();
+        } catch (error) {
+            res.status(500).json({ status: "error" })
+        }
 });
 module.exports = app;
