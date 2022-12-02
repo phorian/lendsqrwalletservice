@@ -8,6 +8,8 @@ const path = require('path');
 const axios = require('axios');
 const app = express();
 const http = require('http')
+
+
 app.use(express.json()); //builtin middleware
 
 /*******************
@@ -127,6 +129,7 @@ app.get('/response', async (req, res, next) => {
             return next();
         } catch (error) {
             res.status(500).json({ status: "error" })
+            console.log(error)
         }
 });
 module.exports = app;
