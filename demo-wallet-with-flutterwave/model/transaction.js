@@ -4,7 +4,7 @@ const { schema } = require('./user')
 const transactionSchema = new mongoose.Schema(
     {
         userId: {
-            type: schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref:"user",
         },
         transactionId: {
