@@ -8,7 +8,10 @@ const path = require('path');
 const axios = require('axios');
 const app = express();
 const http = require('http')
-
+const Wallet = require('./demo-wallet-with-flutterwave/model/wallet');
+const WalletTxn = require('./demo-wallet-with-flutterwave/model/wallet_transact');
+const Txn = require('./demo-wallet-with-flutterwave/model/transaction');
+const wallet_transact = require('./demo-wallet-with-flutterwave/model/wallet_transact');
 
 app.use(express.json()); //builtin middleware
 
@@ -132,4 +135,43 @@ app.get('/response', async (req, res, next) => {
             console.log(error)
         }
 });
+
+const validateUserWallet = async(userId) => {
+    try{
+        //check if user have a wallet, else create wallet
+        const userWallet = await Wallet.findOne({userId});
+
+        //if user wallet doesn't exist, create new one
+        if(!userWallet) {
+            const wallet = await Wallet.create({
+                userId,
+            });
+            return wallet;
+        }
+        return userWallet;
+    } catch (error){
+        console.log(error);
+    }
+};
+
+//create wallet Transaction
+const createWalletTxn = async (userId, status, currency, amount) => {
+    try {
+        //create wallet txn
+        const walletTxn = await wallet_transact.create({
+            amount,
+            userId,
+            isInflow: true,
+            currency,
+            status,
+        });
+        return walletTxn;
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+
+
+
 module.exports = app;
