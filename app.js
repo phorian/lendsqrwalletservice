@@ -12,6 +12,8 @@ const Wallet = require('./demo-wallet-with-flutterwave/model/wallet');
 const WalletTxn = require('./demo-wallet-with-flutterwave/model/wallet_transact');
 const Txn = require('./demo-wallet-with-flutterwave/model/transaction');
 const wallet_transact = require('./demo-wallet-with-flutterwave/model/wallet_transact');
+const transaction = require('./demo-wallet-with-flutterwave/model/transaction');
+const { id } = require('date-fns/locale');
 
 app.use(express.json()); //builtin middleware
 
@@ -111,9 +113,9 @@ app.get('/response', async (req, res, next) => {
     const { transaction_id } = req.query;
     //URL with txn id to confirm txn status
     const url = `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`;
+
     //Network call to confirm txn status
-    try {
-        const response = await axios({
+    const response = await axios({
             url,
             method: "get",
             headers: {
@@ -121,20 +123,48 @@ app.get('/response', async (req, res, next) => {
                 Accept: "application/json",
                 Authorization: `Bearer ${process.env.FLUTTERWAVE_TEST_SECRET_KEY}`,
             },
+    });
+
+    const {status, currency, id, amount, customer } = response.data.data
+
+       //check if customer exists in dB
+    const user = await User.findOne({email: customer.email})
+
+       //check if user have wallet, else create one
+    const wallet = await validateUserWallet(user._id);
+
+       //create wallet txn
+    await createWalletTxn(user._id, status, currency, amount);
+
+       //create txn
+    await createtxn(user._id, id, status, currency, amount, customer);
+
+    await updateWallet(user._id, amount)
+
+    //check if txn id exists already
+    const txnExist = await transaction.findOne({ transactionId: id});
+
+    if(txnExist) {
+        return res.status(409).send("Transaction Already Exists");
+    }
+
+    return res.status(200).json({
+        response: "wallet funded successfully",
+        data: wallet,
         });
-        const response_data = response.data.data
-        
-            if(!response_data){
-                res.status(404).json({ status: "fail" })
-                return next()
-            }
-            res.status(200).json({ status: "success", data: response_data })
-            return next();
-        } catch (error) {
-            res.status(500).json({ status: "error" })
-            console.log(error)
-        }
 });
+
+app.get("/wallet/:userId/balance", async (req,res) => {
+    try {
+        const { userId } = req.params;
+
+        const wallet = await Wallet.findOne({userId});
+        //user
+        res.status(200).json(wallet.balance);
+    } catch(error) {
+        console.log(error);
+    }
+})
 
 const validateUserWallet = async(userId) => {
     try{
@@ -169,7 +199,42 @@ const createWalletTxn = async (userId, status, currency, amount) => {
     } catch (error) {
         console.log(error)
     }
-}
+};
+
+//create txn
+const createtxn = async (userId, id, status, currency, amount, customer) => {
+    try {
+        //create transaction
+        const txn = await transaction.create({
+            userId,
+            transactionId: id,
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+            amount,
+            currency,
+            paymentStatus: status,
+            paymentGateway: "flutterwave",
+        });
+        return txn;
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+//update wallet
+const updateWallet = async(userId, amount) => {
+    try {
+        const wallet = await Wallet.findOneAndUpdate(
+            { userId },
+            {$inc: { balance: amount }},
+            {new: true }
+        );
+        return wallet
+    }catch (error) {
+        console.log(error);
+    }
+};
 
 
 

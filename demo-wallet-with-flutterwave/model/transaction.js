@@ -1,7 +1,7 @@
 const mongoose = require ('mongoose')
-const { schema } = require('./user')
+const { Schema, model } = require('mongoose')
 
-const transactionSchema = new mongoose.Schema(
+const transactionSchema = Schema(
     {
         userId: {
             type: Schema.Types.ObjectId,
@@ -49,4 +49,4 @@ const transactionSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model("Transaction", transactionSchema);
+module.exports = model("Transaction", transactionSchema);
