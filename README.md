@@ -6,3 +6,5 @@ This wallet service allows you perform the following function.
 3. Customer make payment
 4. Check balance
 5. Prevent transaction from going through more than once.
+
+Start application on dev: npm run dev
